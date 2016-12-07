@@ -1,29 +1,39 @@
 <div class="side-comment <%= sectionClasses %>">
   <a href="#" class="marker">
-    <span><%= comments.length %></span>
+    <span><%- comments.length %></span>
   </a>
-  
+
   <div class="comments-wrapper">
     <ul class="comments">
       <% _.each(comments, function( comment ){ %>
-        <%= _.template(commentTemplate, { comment: comment, currentUser: currentUser }) %>
+        <%= _.template(commentTemplate, { comment: comment, currentUser: currentUser, t: t, voting: voting }) %>
       <% }) %>
     </ul>
-    
-    <a href="#" class="add-comment">Leave a comment</a>
-    
+
+    <% if (!currentUser) { %>
+      <span class="restricted">
+        <a href="/signin"><%= t('side-comments.login') %></a>
+        <%= t('side-comments.or') %>
+        <a href="/signup?reference=<%= reference %>"><%= t('side-comments.signup') %></a>
+      </span>
+    <% } %>
+
     <% if (currentUser){ %>
-      <div class="comment-form">
+      <a href="#" class="add-comment"><%= t('side-comments.leave-a-comment') %></a>
+      <div class="comment-form comment-form-wrapper">
         <div class="author-avatar">
-          <img src="<%= currentUser.avatarUrl %>">
+          <img src="<%- currentUser.avatarUrl %>">
         </div>
-        <p class="author-name">
-          <%= currentUser.name %>
-        </p>
-        <input type="text" class="comment-box right-of-avatar" placeholder="Leave a comment...">
-        <div class="actions right-of-avatar">
-          <a href="#" class="action-link post">Post</a>
-          <a href="#" class="action-link cancel">Cancel</a>
+        <div class="right-of-avatar">
+          <p class="author-name">
+            <%- currentUser.name %>
+          </p>
+          <p class="error"></p>
+          <input type="text" class="comment-box" placeholder="<%= t('side-comments.leave-a-comment') %>...">
+          <div class="actions">
+            <a href="#" class="action-link post"><%= t('side-comments.post') %></a>
+            <a href="#" class="action-link cancel"><%= t('side-comments.cancel') %></a>
+          </div>
         </div>
       </div>
     <% } %>

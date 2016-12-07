@@ -16,7 +16,7 @@ var $ = jQuery;
  *
  * TODO: **GIVE EXAMPLE OF STRUCTURE HERE***
  */
-function SideComments( el, currentUser, existingComments ) {
+function SideComments( el, currentUser, existingComments, options ) {
   this.$el = $(el);
   this.$body = $('body');
   this.eventPipe = new Emitter;
@@ -25,6 +25,11 @@ function SideComments( el, currentUser, existingComments ) {
   this.existingComments = _.cloneDeep(existingComments) || [];
   this.sections = [];
   this.activeSection = null;
+  options = options || {};
+  options.locale = options.locale || 'en';
+  options.voting = options.voting || false;
+  options.reference = options.reference || '';
+  this.options = options;
 
   // Event bindings
   this.eventPipe.on('showComments', _.bind(this.showComments, this));
@@ -32,7 +37,10 @@ function SideComments( el, currentUser, existingComments ) {
   this.eventPipe.on('sectionSelected', _.bind(this.sectionSelected, this));
   this.eventPipe.on('sectionDeselected', _.bind(this.sectionDeselected, this));
   this.eventPipe.on('commentPosted', _.bind(this.commentPosted, this));
+  this.eventPipe.on('commentUpdated', _.bind(this.commentUpdated, this));
   this.eventPipe.on('commentDeleted', _.bind(this.commentDeleted, this));
+  this.eventPipe.on('commentUpvoted', _.bind(this.commentUpvoted, this));
+  this.eventPipe.on('commentDownvoted', _.bind(this.commentUpvoted, this));
   this.eventPipe.on('addCommentAttempted', _.bind(this.addCommentAttempted, this));
   this.$body.on('click', _.bind(this.bodyClick, this));
   this.initialize(this.existingComments);
@@ -50,7 +58,7 @@ SideComments.prototype.initialize = function( existingComments ) {
     var sectionId = $section.data('section-id').toString();
     var sectionComments = _.find(this.existingComments, { sectionId: sectionId });
 
-    this.sections.push(new Section(this.eventPipe, $section, this.currentUser, sectionComments));
+    this.sections.push(new Section(this.eventPipe, $section, this.currentUser, sectionComments, this.options));
   }, this);
 };
 
@@ -105,11 +113,35 @@ SideComments.prototype.commentPosted = function( comment ) {
 };
 
 /**
+ * Fired when the commentUpdated event is triggered.
+ * @param  {Object} comment  The comment object to be updated.
+ */
+SideComments.prototype.commentUpdated = function( comment ) {
+  this.emit('commentUpdated', comment);
+};
+
+/**
  * Fired when the commentDeleted event is triggered.
  * @param  {Object} comment  The commentId of the deleted comment.
  */
 SideComments.prototype.commentDeleted = function( comment ) {
   this.emit('commentDeleted', comment);
+};
+
+/**
+ * Fired when the commentUpvoted event is triggered.
+ * @param  {Object} comment  The commentId of the deleted comment.
+ */
+SideComments.prototype.commentUpvoted = function( comment ) {
+  this.emit('commentUpvoted', comment);
+};
+
+/**
+ * Fired when the commentDownvoted event is triggered.
+ * @param  {Object} comment  The commentId of the deleted comment.
+ */
+SideComments.prototype.commentDownvoted = function( comment ) {
+  this.emit('commentDownvoted', comment);
 };
 
 /**
@@ -127,6 +159,15 @@ SideComments.prototype.addCommentAttempted = function() {
 SideComments.prototype.insertComment = function( comment ) {
   var section = _.find(this.sections, { id: comment.sectionId });
   section.insertComment(comment);
+};
+
+/**
+ * Updates the given comment into the right section.
+ * @param  {Object} comment A comment to be updated.
+ */
+SideComments.prototype.replaceComment = function( comment ) {
+  var section = _.find(this.sections, { id: comment.sectionId });
+  section.replaceComment(comment);
 };
 
 /**
